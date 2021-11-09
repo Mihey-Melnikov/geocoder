@@ -1,22 +1,30 @@
 import sqlite3
 
-conn = sqlite3.connect("geodatabase.db") # или :memory: чтобы сохранить в RAM
-cursor = conn.cursor()
 
-# Создание таблицы
-# cursor.execute("""CREATE TABLE albums
-#                   (title text, artist text, release_date text,
-#                    publisher text, media_type text)
-#                """)
-# conn.commit()
+class DataBase:
+    """ Класс отвечающий за базу данных """
 
-lst = ('qwerty', 'Mikhey', None, 'qq', 'pov')
+    def __init__(self):
+        """ Инициализация и создание базы данных """
+        self.conn = sqlite3.connect(r"data/geodatabase.db")
+        self.cursor = self.conn.cursor()
 
-cursor.execute("""INSERT INTO albums
-                  VALUES (?, ?, ?, ?, ?)""", lst)
+    def create_table_geo_bd(self):
+        """ Создание таблицы """
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS geo_bd
+                          (id int primary key, lat real, lon real, 
+                          city text default null, street text default null, 
+                          housenumber text default null, postcode int default null)
+                       """)
+        self.conn.commit()
 
-conn.commit()
+    def add_data(self, data):
+        """ Добавление данных в таблицу """
+        self.cursor.executemany("insert into geo_bd values(?, ?, ?, ?, ?, ?, ?)", data)
+        self.conn.commit()
 
-sql = "SELECT * FROM albums WHERE artist=?"
-cursor.execute(sql, [("Mikhey")])
-print(cursor.fetchall()) # or use fetchone()
+    def show_all_data_by_street(self, street):
+        """ Тест """
+        sql = "select * from geo_bd where street=? and housenumber=?"
+        self.cursor.execute(sql, [(street), ('4')])
+        print(self.cursor.fetchall())
