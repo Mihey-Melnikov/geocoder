@@ -25,6 +25,6 @@ class DataBase:
 
     def show_all_data_by_street(self, street):
         """ Тест """
-        sql = "select * from geo_bd where street=? and housenumber=?"
-        self.cursor.execute(sql, [(street), ('4')])
+        sql = "select * from geo_bd where street=?"
+        self.cursor.execute(sql, [(street)])
         print(self.cursor.fetchall())
