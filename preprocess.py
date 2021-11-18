@@ -9,6 +9,7 @@ NODE_RE = re.compile(r"""<nd ref="(.+?)"\/>""")
 
 
 def parse_simple_nodes(xml_data):
+    """ Парсит точки из формата XML в формат для БД"""
     all_match = re.findall(SIMPLE_NODE_RE, xml_data)
     nodes_dict = {}
     for match in all_match:
@@ -17,6 +18,7 @@ def parse_simple_nodes(xml_data):
 
 
 def parse_tags(xml_tags):
+    """ Парсит теги из формата XML для хранения в БД """
     all_match = re.findall(TAGS_RE, xml_tags)
     tags = []
     for match in all_match:
@@ -25,6 +27,7 @@ def parse_tags(xml_tags):
 
 
 def parse_complex_nodes(xml_data):
+    """ Парсит точки из формата XML для хранения в БД """
     all_match = re.findall(COMPLEX_NODE_RE, xml_data)
     nodes_dict = {}
     for match in all_match:
@@ -33,6 +36,7 @@ def parse_complex_nodes(xml_data):
 
 
 def parse_ways(xml_data):
+    """ Парсит пути из формата XML для хранения в БД """
     all_match = re.findall(WAYS_RE, xml_data)
     ways_dict = {}
     for match in all_match:
@@ -41,6 +45,7 @@ def parse_ways(xml_data):
 
 
 def parse_nodes(xml_data):
+    """ Парсит id точек для хранения в БД """
     all_match = re.findall(NODE_RE, xml_data)
     nodes = []
     for match in all_match:
@@ -49,6 +54,7 @@ def parse_nodes(xml_data):
 
 
 def add_data_to_db(data, db):
+    """ Добавляет данные в таблицу geo """
     simple_nodes_db_format = parse_simple_nodes(data)
     if len(simple_nodes_db_format) != 0:
         db.add_nodes(simple_nodes_db_format)
@@ -63,6 +69,7 @@ def add_data_to_db(data, db):
 
 
 def window(path, db):
+    """ Скользящее окно """
     file = open(path, 'r', encoding='utf-8')
     previous_data = ''
     while True:
@@ -75,6 +82,7 @@ def window(path, db):
 
 
 def format_node_for_geo_db(data):
+    """ Форматирует данные точек для загрузки в таблицу geo """
     format_node = []
     for node in data:
         addr_data = get_addr_data(node[3])
@@ -85,24 +93,26 @@ def format_node_for_geo_db(data):
 
 
 def get_mass_center(mass):
-    lat = sum(coord[0] for coord in mass) / len(mass)
-    lon = sum(coord[1] for coord in mass) / len(mass)
+    """ Возвращает центр масс домов """
+    lat = sum(coord[0] for coord in mass[:-1]) / (len(mass) - 1)
+    lon = sum(coord[1] for coord in mass[:-1]) / (len(mass) - 1)
     return lat, lon
 
 
 def format_way_for_geo_db(data, db):
+    """ Форматирует данные путей для загрузки в таблицу geo """
     format_way = []
     for way in data:
         addr_data = get_addr_data(way[2])
         if addr_data is None:
             continue
         lat, lon = get_mass_center(db.get_coords_by_id(way[1].split(';')))  # тип инт // стр
-        print(f"lat: {lat} lon:{lon} addr: {addr_data}")
         format_way.append((way[0], lat, lon) + addr_data)
     return format_way
 
 
 def get_addr_data(tags):
+    """ Возвращает адрес из тегов """
     if 'addr:city' not in tags or 'addr:street' not in tags or 'addr:housenumber' not in tags:
         return None
     tags_dict = {}
@@ -116,6 +126,7 @@ def get_addr_data(tags):
 
 
 def fill_geo_db(db):
+    """ Заполняет таблицу geo """
     nodes = db.get_nodes_with_tags()
     db.add_data_to_geo(format_node_for_geo_db(nodes))
 
@@ -124,6 +135,6 @@ def fill_geo_db(db):
 
 
 def run(db):
+    """ Запускает программу """
     window("data/mgn.osm", db)
     fill_geo_db(db)
-

@@ -6,5 +6,7 @@ db.create_table_nodes()
 db.create_table_ways()
 db.create_table_geo()
 preprocess.run(db)
+db.delete_table_nodes()
+db.delete_table_ways()
 
 

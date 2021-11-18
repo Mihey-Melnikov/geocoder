@@ -18,19 +18,29 @@ class DataBase:
         self.conn.commit()
 
     def create_table_nodes(self):
-        """ Создание таблицы точек """
+        """ Создание временной таблицы точек """
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS nodes
                           (id int primary key, lat real, lon real, tags text)""")
         self.conn.commit()
 
     def create_table_ways(self):
-        """ Создание таблицы путей """
+        """ Создание временной таблицы путей """
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS ways
                           (id int primary key, nodes text, tags text)""")
         self.conn.commit()
 
+    def delete_table_nodes(self):
+        """ Удаление временной таблицы точек """
+        self.cursor.execute("DROP TABLE IF EXISTS nodes")
+        self.conn.commit()
+
+    def delete_table_ways(self):
+        """ Удаление временной таблицы путей """
+        self.cursor.execute("DROP TABLE IF EXISTS ways")
+        self.conn.commit()
+
     def add_data_to_geo(self, data):
-        """ Добавление данных в таблицу геоданных """
+        """ Добавление данных в таблицу geo """
         self.cursor.executemany("insert or replace into geo values(?, ?, ?, ?, ?, ?, ?)", data)
         self.conn.commit()
 
@@ -45,17 +55,17 @@ class DataBase:
         self.conn.commit()
 
     def get_nodes_with_tags(self):
-        """ Возвращает точки с тегами """
+        """ Возвращает точки, у которых есть теги """
         self.cursor.execute("select * from nodes where tags is not null")
         return self.cursor.fetchall()
 
     def get_ways(self):
-        """ Возвращает пути """
+        """ Возвращает пути, у которых есть теги """
         self.cursor.execute("select * from ways where tags is not null")
         return self.cursor.fetchall()
 
     def get_coords_by_id(self, ids):
-        """ Возвращает координаты по id """
+        """ Возвращает координаты по данным id """
         sql = "select lat, lon from nodes where id=?"
         coords = []
         for id in ids:
