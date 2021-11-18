@@ -9,22 +9,56 @@ class DataBase:
         self.conn = sqlite3.connect(r"data/geodatabase.db")
         self.cursor = self.conn.cursor()
 
-    def create_table_geo_bd(self):
-        """ Создание таблицы """
-        self.cursor.execute("""CREATE TABLE IF NOT EXISTS geo_bd
+    def create_table_geo(self):
+        """ Создание таблицы с геоданными """
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS geo
                           (id int primary key, lat real, lon real, 
                           city text default null, street text default null, 
-                          housenumber text default null, postcode int default null)
-                       """)
+                          housenumber text default null, postcode int default null)""")
         self.conn.commit()
 
-    def add_data(self, data):
-        """ Добавление данных в таблицу """
-        self.cursor.executemany("insert into geo_bd values(?, ?, ?, ?, ?, ?, ?)", data)
+    def create_table_nodes(self):
+        """ Создание таблицы точек """
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS nodes
+                          (id int primary key, lat real, lon real, tags text)""")
         self.conn.commit()
 
-    def show_all_data_by_street(self, street):
-        """ Тест """
-        sql = "select * from geo_bd where street=?"
-        self.cursor.execute(sql, [(street)])
-        print(self.cursor.fetchall())
+    def create_table_ways(self):
+        """ Создание таблицы путей """
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS ways
+                          (id int primary key, nodes text, tags text)""")
+        self.conn.commit()
+
+    def add_data_to_geo(self, data):
+        """ Добавление данных в таблицу геоданных """
+        self.cursor.executemany("insert or replace into geo values(?, ?, ?, ?, ?, ?, ?)", data)
+        self.conn.commit()
+
+    def add_nodes(self, nodes):
+        """ Добавление точек в таблицу nodes """
+        self.cursor.executemany("insert or replace into nodes values(?, ?, ?, ?)", nodes)
+        self.conn.commit()
+
+    def add_ways(self, ways):
+        """ Добавление путей в таблицу ways """
+        self.cursor.executemany("insert or replace into ways values(?, ?, ?)", ways)
+        self.conn.commit()
+
+    def get_nodes_with_tags(self):
+        """ Возвращает точки с тегами """
+        self.cursor.execute("select * from nodes where tags is not null")
+        return self.cursor.fetchall()
+
+    def get_ways(self):
+        """ Возвращает пути """
+        self.cursor.execute("select * from ways where tags is not null")
+        return self.cursor.fetchall()
+
+    def get_coords_by_id(self, ids):
+        """ Возвращает координаты по id """
+        sql = "select lat, lon from nodes where id=?"
+        coords = []
+        for id in ids:
+            self.cursor.execute(sql, [id])
+            coords.append(self.cursor.fetchone())
+        return coords
