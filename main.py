@@ -1,12 +1,16 @@
 import data_base
-import preprocess
+from preprocessor import run
+from request_parser import parse_question, parse_answer
+
+
+def preprocess(db, path):
+    run(db, path)
+
 
 db = data_base.DataBase()
-db.create_table_nodes()
-db.create_table_ways()
-db.create_table_geo()
-preprocess.run(db)
-db.delete_table_nodes()
-db.delete_table_ways()
-
-
+# preprocess(db, "data/big_mgn.osm")  # big_
+# db.delete_table_geo()
+while True:
+    addr = input()
+    city, street, house = parse_question(addr, db)
+    parse_answer(db.get_rows_by(city, street, house))

@@ -94,8 +94,14 @@ def format_node_for_geo_db(data):
 
 def get_mass_center(mass):
     """ Возвращает центр масс домов """
-    lat = sum(coord[0] for coord in mass[:-1]) / (len(mass) - 1)
-    lon = sum(coord[1] for coord in mass[:-1]) / (len(mass) - 1)
+    if mass[0] == mass[-1]:
+        del mass[-1]
+    if len(mass) == 0:
+        return -100, -100
+    if len(mass) == 1:
+        return mass[0][0], mass[0][1]
+    lat = sum(coord[0] for coord in mass) / len(mass)
+    lon = sum(coord[1] for coord in mass) / len(mass)
     return lat, lon
 
 
@@ -106,7 +112,7 @@ def format_way_for_geo_db(data, db):
         addr_data = get_addr_data(way[2])
         if addr_data is None:
             continue
-        lat, lon = get_mass_center(db.get_coords_by_id(way[1].split(';')))  # тип инт // стр
+        lat, lon = get_mass_center(db.get_coords_by_id(way[1].split(';')))
         format_way.append((way[0], lat, lon) + addr_data)
     return format_way
 
@@ -134,7 +140,27 @@ def fill_geo_db(db):
     db.add_data_to_geo(format_way_for_geo_db(ways, db))
 
 
-def run(db):
+def create_subtable(db):
+    """ Создает вспомогательные таблицы """
+    db.create_subtable_cities()
+    fill_cities_db(db)
+
+
+def fill_cities_db(db):
+    """ Заполняет таблицу городов """
+    cities = [x[0] for x in set(db.get_cities_from_geo())]
+    for city in cities:
+        streets = [x[0] for x in set(db.get_streets_by_city_in_geo(city))]
+        db.add_data_to_cities(city, ";".join(streets))
+
+
+def run(db, path):
     """ Запускает программу """
-    window("data/mgn.osm", db)
+    db.create_temp_table_nodes()
+    db.create_temp_table_ways()
+    db.create_table_geo()
+    window(path, db)
     fill_geo_db(db)
+    db.delete_table_nodes()
+    db.delete_table_ways()
+    create_subtable(db)
