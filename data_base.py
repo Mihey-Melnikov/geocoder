@@ -158,6 +158,12 @@ class DataBase:
                   f"city like '%{city}%' and " \
                   f"street like '%{street}%'"
         else:
-            raise Exception("Что-то не так в получении строк по данным!")
+            return "Неккоректно написан адрес!"
         self.cursor.execute(sql)
         return list(self.cursor.fetchall())
+
+    def get_cities_count(self):
+        """ Возвращает количество городов """
+        sql = "select count(city) from cities"
+        self.cursor.execute(sql)
+        return self.cursor.fetchone()
