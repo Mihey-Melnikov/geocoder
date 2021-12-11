@@ -9,7 +9,8 @@ NODE_RE = re.compile(r"""<nd ref="(.+?)"\/>""")
 
 
 def parse_simple_nodes(xml_data):
-    """ Парсит точки из формата XML в формат для БД"""
+    """ Парсит точки из формата XML в формат для БД """
+
     all_match = re.findall(SIMPLE_NODE_RE, xml_data)
     nodes_dict = {}
     for match in all_match:
@@ -19,6 +20,7 @@ def parse_simple_nodes(xml_data):
 
 def parse_tags(xml_tags):
     """ Парсит теги из формата XML для хранения в БД """
+
     all_match = re.findall(TAGS_RE, xml_tags)
     tags = []
     for match in all_match:
@@ -28,24 +30,29 @@ def parse_tags(xml_tags):
 
 def parse_complex_nodes(xml_data):
     """ Парсит точки из формата XML для хранения в БД """
+
     all_match = re.findall(COMPLEX_NODE_RE, xml_data)
     nodes_dict = {}
     for match in all_match:
-        nodes_dict[match[0]] = (match[0], match[1], match[2], parse_tags(match[3]))
+        nodes_dict[match[0]] = (match[0], match[1],
+                                match[2], parse_tags(match[3]))
     return list(nodes_dict.values())
 
 
 def parse_ways(xml_data):
     """ Парсит пути из формата XML для хранения в БД """
+
     all_match = re.findall(WAYS_RE, xml_data)
     ways_dict = {}
     for match in all_match:
-        ways_dict[match[0]] = (match[0], parse_nodes(match[1]), parse_tags(match[3]))
+        ways_dict[match[0]] = (match[0],
+                               parse_nodes(match[1]), parse_tags(match[3]))
     return list(ways_dict.values())
 
 
 def parse_nodes(xml_data):
     """ Парсит id точек для хранения в БД """
+
     all_match = re.findall(NODE_RE, xml_data)
     nodes = []
     for match in all_match:
@@ -55,6 +62,7 @@ def parse_nodes(xml_data):
 
 def add_data_to_db(data, db):
     """ Добавляет данные в таблицу geo """
+
     simple_nodes_db_format = parse_simple_nodes(data)
     if len(simple_nodes_db_format) != 0:
         db.add_nodes(simple_nodes_db_format)
@@ -70,6 +78,7 @@ def add_data_to_db(data, db):
 
 def window(path, db):
     """ Скользящее окно """
+
     file = open(path, 'r', encoding='utf-8')
     previous_data = ''
     while True:
@@ -83,6 +92,7 @@ def window(path, db):
 
 def format_node_for_geo_db(data):
     """ Форматирует данные точек для загрузки в таблицу geo """
+
     format_node = []
     for node in data:
         addr_data = get_addr_data(node[3])
@@ -94,6 +104,7 @@ def format_node_for_geo_db(data):
 
 def get_mass_center(mass):
     """ Возвращает центр масс домов """
+
     if mass[0] == mass[-1]:
         del mass[-1]
     if len(mass) == 0:
@@ -107,6 +118,7 @@ def get_mass_center(mass):
 
 def format_way_for_geo_db(data, db):
     """ Форматирует данные путей для загрузки в таблицу geo """
+
     format_way = []
     for way in data:
         addr_data = get_addr_data(way[2])
@@ -119,7 +131,10 @@ def format_way_for_geo_db(data, db):
 
 def get_addr_data(tags):
     """ Возвращает адрес из тегов """
-    if 'addr:city' not in tags or 'addr:street' not in tags or 'addr:housenumber' not in tags:
+
+    if 'addr:city' not in tags or\
+            'addr:street' not in tags or\
+            'addr:housenumber' not in tags:
         return None
     tags_dict = {}
     for pair in tags.split(';'):
@@ -133,6 +148,7 @@ def get_addr_data(tags):
 
 def fill_geo_db(db):
     """ Заполняет таблицу geo """
+
     nodes = db.get_nodes_with_tags()
     db.add_data_to_geo(format_node_for_geo_db(nodes))
 
@@ -142,20 +158,26 @@ def fill_geo_db(db):
 
 def create_subtable(db):
     """ Создает вспомогательные таблицы """
+
     db.create_subtable_cities()
     fill_cities_db(db)
 
 
 def fill_cities_db(db):
     """ Заполняет таблицу городов """
+
     cities = [x[0] for x in set(db.get_cities_from_geo())]
     for city in cities:
-        streets = [x[0] for x in set(db.get_streets_by_city_in_geo(city))]
+        streets = []
+        for row in set(db.get_streets_by_city_in_geo(city)):
+            if row[0] is not None:
+                streets.append(row[0])
         db.add_data_to_cities(city, ";".join(streets))
 
 
 def run(db, path):
     """ Запускает программу """
+
     db.create_temp_table_nodes()
     db.create_temp_table_ways()
     db.create_table_geo()
