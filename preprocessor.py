@@ -65,15 +65,15 @@ def add_data_to_db(data, db):
 
     simple_nodes_db_format = parse_simple_nodes(data)
     if len(simple_nodes_db_format) != 0:
-        db.add_nodes(simple_nodes_db_format)
+        db.add_data_to_table(simple_nodes_db_format, "nodes")
 
     complex_nodes_db_format = parse_complex_nodes(data)
     if len(complex_nodes_db_format) != 0:
-        db.add_nodes(complex_nodes_db_format)
+        db.add_data_to_table(complex_nodes_db_format, "nodes")
 
     ways_db_format = parse_ways(data)
     if len(ways_db_format) != 0:
-        db.add_ways(ways_db_format)
+        db.add_data_to_table(ways_db_format, "ways")
 
 
 def window(path, db):
@@ -149,11 +149,11 @@ def get_addr_data(tags):
 def fill_geo_db(db):
     """ Заполняет таблицу geo """
 
-    nodes = db.get_nodes_with_tags()
-    db.add_data_to_geo(format_node_for_geo_db(nodes))
+    nodes = db.get_data_with_tags_from_table("nodes")
+    db.add_data_to_table(format_node_for_geo_db(nodes), "geo")
 
-    ways = db.get_ways()
-    db.add_data_to_geo(format_way_for_geo_db(ways, db))
+    ways = db.get_data_with_tags_from_table("ways")
+    db.add_data_to_table(format_way_for_geo_db(ways, db), "geo")
 
 
 def create_subtable(db):
@@ -166,10 +166,10 @@ def create_subtable(db):
 def fill_cities_db(db):
     """ Заполняет таблицу городов """
 
-    cities = [x[0] for x in set(db.get_cities_from_geo())]
+    cities = [x[0] for x in set(db.get_data_from_table("city", "geo"))]
     for city in cities:
         streets = []
-        for row in set(db.get_streets_by_city_in_geo(city)):
+        for row in db.get_streets_by_city_in_geo(city):
             if row[0] is not None:
                 streets.append(row[0])
         db.add_data_to_cities(city, ";".join(streets))
@@ -183,6 +183,6 @@ def run(db, path):
     db.create_table_geo()
     window(path, db)
     fill_geo_db(db)
-    db.delete_table_nodes()
-    db.delete_table_ways()
+    db.delete_table("nodes")
+    db.delete_table("ways")
     create_subtable(db)

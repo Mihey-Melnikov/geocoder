@@ -4,11 +4,10 @@ import sqlite3
 class DataBase:
     """ Класс отвечающий за базу данных """
 
-    def __init__(self):
+    def __init__(self, path=r"data/geodatabase.db"):
         """ Инициализация и создание базы данных """
 
-        self.conn = sqlite3.connect(r"data/geodatabase.db",
-                                    check_same_thread=False)
+        self.conn = sqlite3.connect(path, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
     def close(self):
@@ -54,55 +53,24 @@ class DataBase:
                                   city text, streets text)""")
         self.conn.commit()
 
-    def delete_table_nodes(self):
-        """ Удаление временной таблицы точек """
+    def delete_table(self, table):
+        """ Удаление таблицы """
 
-        self.cursor.execute("DROP TABLE IF EXISTS nodes")
+        self.cursor.execute(f"DROP TABLE IF EXISTS {table}")
         self.conn.commit()
 
-    def delete_table_ways(self):
-        """ Удаление временной таблицы путей """
+    def add_data_to_table(self, data, table):
+        """ Добавление данных в таблицу """
 
-        self.cursor.execute("DROP TABLE IF EXISTS ways")
+        data_count = len(data[0])
+        sql = f"""INSERT OR REPLACE INTO {table} VALUES({"?, " * (data_count - 1)}?)"""
+        self.cursor.executemany(sql, data)
         self.conn.commit()
 
-    def delete_table_geo(self):
-        """ Удаление временной таблицы путей """
+    def get_data_with_tags_from_table(self, table):
+        """ Возвращает данные из таблиц, у которых есть теги """
 
-        self.cursor.execute("DROP TABLE IF EXISTS geo")
-        self.conn.commit()
-
-    def add_data_to_geo(self, data):
-        """ Добавление данных в таблицу geo """
-
-        self.cursor.executemany(
-            "INSERT OR REPLACE INTO geo VALUES(?, ?, ?, ?, ?, ?, ?)", data)
-        self.conn.commit()
-
-    def add_nodes(self, nodes):
-        """ Добавление точек в таблицу nodes """
-
-        self.cursor.executemany(
-            "INSERT OR REPLACE INTO nodes VALUES(?, ?, ?, ?)", nodes)
-        self.conn.commit()
-
-    def add_ways(self, ways):
-        """ Добавление путей в таблицу ways """
-
-        self.cursor.executemany(
-            "INSERT OR REPLACE INTO ways VALUES(?, ?, ?)", ways)
-        self.conn.commit()
-
-    def get_nodes_with_tags(self):
-        """ Возвращает точки, у которых есть теги """
-
-        self.cursor.execute("SELECT * FROM nodes WHERE tags IS NOT NULL")
-        return self.cursor.fetchall()
-
-    def get_ways(self):
-        """ Возвращает пути, у которых есть теги """
-
-        self.cursor.execute("SELECT * FROM ways WHERE tags IS NOT NULL")
+        self.cursor.execute(f"SELECT * FROM {table} WHERE tags IS NOT NULL")
         return self.cursor.fetchall()
 
     def get_coords_by_id(self, ids):
@@ -115,51 +83,16 @@ class DataBase:
             coords.append(self.cursor.fetchone())
         return coords
 
-    def get_rows_by_street(self, street):
-        """ Возвращает возможные варианты по улице """
+    def get_data_from_table(self, data, table):
+        """ Возвращает данные из таблицы """
 
-        sql = f"SELECT * FROM geo WHERE street LIKE '%{street}%'"
-        self.cursor.execute(sql)
-        return list(self.cursor.fetchall())
-
-    def get_rows_by_city(self, city):
-        """ Возвращает возможные варианты по улице """
-
-        sql = f"SELECT * FROM geo WHERE city LIKE '%{city}%'"
-        self.cursor.execute(sql)
-        return list(self.cursor.fetchall())
-
-    def get_rows_by_postcode(self, postcode):
-        """ Возвращает возможные варианты по улице """
-
-        sql = f"SELECT * FROM geo WHERE postcode LIKE '%{postcode}%'"
-        self.cursor.execute(sql)
-        return list(self.cursor.fetchall())
-
-    def get_rows_by_coord(self, lat, lon):
-        """ Возвращает возможные варианты по улице """
-
-        sql = f"SELECT * FROM geo WHERE lat LIKE '%{lat}%' AND lon LIKE '%{lon}%'"
-        self.cursor.execute(sql)
-        return list(self.cursor.fetchall())
-
-    def get_cities_from_geo(self):
-        """ Возвращает список городов всех """
-
-        sql = "SELECT city FROM geo"
-        self.cursor.execute(sql)
-        return list(self.cursor.fetchall())
-
-    def get_streets_from_geo(self):
-        """ Возвращает улицы из таблицы geo """
-        sql = "SELECT street FROM geo"
-        self.cursor.execute(sql)
+        self.cursor.execute(f"SELECT {data} FROM {table}")
         return list(self.cursor.fetchall())
 
     def get_streets_by_city_in_geo(self, city):
         """ Возвращает все улицы города """
 
-        sql = f"SELECT street FROM geo WHERE city=?"
+        sql = f"SELECT DISTINCT street FROM geo WHERE city=?"
         self.cursor.execute(sql, [city])
         return list(self.cursor.fetchall())
 
@@ -169,13 +102,6 @@ class DataBase:
         self.cursor.execute(
             f"""INSERT INTO cities (city, streets) VALUES ("{city}", "{streets}")""")
         self.conn.commit()
-
-    def get_streets_by_city_in_cities(self, city):
-        """ Возвращает все улицы города быстрее """
-
-        sql = f"SELECT streets FROM cities WHERE city=?"
-        self.cursor.execute(sql, [city])
-        return list(self.cursor.fetchall())
 
     def get_rows_by(self, city=None, street=None, housenumber=None):
         """ Возвращает возможные варианты адресов """
@@ -198,9 +124,8 @@ class DataBase:
         self.cursor.execute(sql)
         return list(self.cursor.fetchall())
 
-    def get_cities_count(self):
-        """ Возвращает количество городов """
+    def get_data_count(self, data, table):
+        """ Возвращает количество уникальных данных в таблице """
 
-        sql = "SELECT count(city) FROM cities"
-        self.cursor.execute(sql)
+        self.cursor.execute(f"SELECT COUNT(DISTINCT {data}) FROM {table}")
         return self.cursor.fetchone()

@@ -1,10 +1,10 @@
 from tkinter import *
 from tkinter import messagebox, ttk, filedialog
 from request_parser import *
-from Address import Address
+from address import Address
 import pyperclip
 import os
-import data_base
+import database
 import preprocessor
 import threading
 
@@ -21,10 +21,12 @@ class GeoGui:
 
         self.db = self.get_db()
         global DATABASE_EXIST
+        DATABASE_EXIST = False
+        city_count, street_count, total_count, status = 0, 0, 0, "не создана"
         if self.db:
             DATABASE_EXIST = True
-        else:
-            DATABASE_EXIST = False
+            city_count, street_count, total_count = self.get_actual_stat()
+            status = "создана"
 
         self.window = Tk()
         self.window.title("Geocoder")
@@ -45,14 +47,24 @@ class GeoGui:
         db_frame.place(x=0, y=0, height=300, width=440)
 
         self.db_info_city_count_lbl = Label(master=db_frame,
-                                            text="Всего городов: 0",
+                                            text=f"Всего городов: {city_count}",
                                             font="Arial 14")
-        self.db_info_city_count_lbl.place(x=270, y=60)
+        self.db_info_city_count_lbl.place(x=260, y=90)
 
-        self.db_info_city_count_lbl = Label(master=db_frame,
-                                            text="Всего домов: 0",
-                                            font="Arial 14")
-        self.db_info_city_count_lbl.place(x=280, y=90)
+        self.db_info_street_count_lbl = Label(master=db_frame,
+                                              text=f"Всего улиц: {street_count}",
+                                              font="Arial 14")
+        self.db_info_street_count_lbl.place(x=260, y=120)
+
+        self.db_info_house_count_lbl = Label(master=db_frame,
+                                             text=f"Всего домов: {total_count}",
+                                             font="Arial 14")
+        self.db_info_house_count_lbl.place(x=260, y=150)
+
+        self.db_state_lbl = Label(master=db_frame,
+                                  text=f"Статус базы данных:\n{status}",
+                                  font="Arial 14")
+        self.db_state_lbl.place(x=255, y=30)
 
         self.db_create_btn = Button(master=db_frame,
                                     text="Сформировать базу данных",
@@ -217,6 +229,7 @@ class GeoGui:
         if DATABASE_EXIST:
             if self.confirm_upload():
                 self.delete_db(sure=True)
+                self.update_stat(nullify=True)
             else:
                 return
         db_path = filedialog.askopenfilename()
@@ -224,12 +237,36 @@ class GeoGui:
             messagebox.showerror("Ошибка",
                                  "Выберите файл с расширением .osm")
             return
-        self.db = data_base.DataBase()
+        self.db = database.DataBase()
         thread = threading.Thread(
             target=lambda: preprocessor.run(self.db, db_path))
         self.db_create_btn.config(state=DISABLED)
         thread.start()
         self.check_thread(thread)
+
+    def update_stat(self, nullify=False):
+        """ Обновляет статистику по базу """
+
+        if nullify:
+            self.db_state_lbl.config(text="Статус базы данных:\nне создана")
+            city_count = 0
+            total_count = 0
+            street_count = 0
+        else:
+            self.db_state_lbl.config(text="Статус базы данных:\nсоздана")
+            city_count, street_count, total_count = self.get_actual_stat()
+
+        self.db_info_city_count_lbl.config(text=f"Всего городов: {city_count}")
+        self.db_info_street_count_lbl.config(text=f"Всего улиц: {street_count}")
+        self.db_info_house_count_lbl.config(text=f"Всего домов: {total_count}")
+
+    def get_actual_stat(self):
+        """ Возвращает статистику по существующей базе """
+
+        city_count = self.db.get_data_count("city", "geo")[0]
+        total_count = self.db.get_data_count("id", "geo")[0]
+        street_count = self.db.get_data_count("street", "geo")[0]
+        return city_count, street_count, total_count
 
     @staticmethod
     def confirm_upload():
@@ -243,22 +280,23 @@ class GeoGui:
         """ Проверяет завершенность потока для создания базы """
 
         if thread.is_alive():
-            btn_text = self.db_create_btn.cget("text")
-            if btn_text[-1] not in ["—", "\\", "|", "/"]:
-                self.db_create_btn.config(text="Формируем базу данных —")
+            state_text = self.db_state_lbl.cget("text")
+            if state_text[-1] not in ["—", "\\", "|", "/"]:
+                self.db_state_lbl.config(text="Статус базы данных:\nсоздается —")
             else:
-                if btn_text[-1] == "—":
-                    self.db_create_btn.config(text=f"{btn_text[:-1]}\\")
-                elif btn_text[-1] == "\\":
-                    self.db_create_btn.config(text=f"{btn_text[:-1]}|")
-                elif btn_text[-1] == "|":
-                    self.db_create_btn.config(text=f"{btn_text[:-1]}/")
-                elif btn_text[-1] == "/":
-                    self.db_create_btn.config(text=f"{btn_text[:-1]}—")
+                if state_text[-1] == "—":
+                    self.db_state_lbl.config(text=f"{state_text[:-1]}\\")
+                elif state_text[-1] == "\\":
+                    self.db_state_lbl.config(text=f"{state_text[:-1]}|")
+                elif state_text[-1] == "|":
+                    self.db_state_lbl.config(text=f"{state_text[:-1]}/")
+                elif state_text[-1] == "/":
+                    self.db_state_lbl.config(text=f"{state_text[:-1]}—")
             self.window.after(100, lambda: self.check_thread(thread))
         else:
             self.db_create_btn.config(state=NORMAL)
-            self.db_create_btn.config(text="База данных сформирована")
+            # self.db_create_btn.config(text="Обновить базу данных")
+            self.update_stat()
             global DATABASE_EXIST
             DATABASE_EXIST = True
             self.show_info("База данных создана")
@@ -279,6 +317,7 @@ class GeoGui:
         if not sure:
             self.show_info("База данных удалена")
         self.db_create_btn.config(text="Сформировать базу данных")
+        self.update_stat(True)
         global DATABASE_EXIST
         DATABASE_EXIST = False
 
@@ -295,7 +334,7 @@ class GeoGui:
         """ Создает базу данных при инициализации """
 
         if os.path.exists("data/geodatabase.db"):
-            return data_base.DataBase()
+            return database.DataBase()
         return None
 
     @staticmethod

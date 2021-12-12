@@ -4,7 +4,7 @@ def check_city(db, city):
     Возвращает город в правильном виде
     Иначе None
     """
-    cities = [c[0] for c in db.get_cities_from_geo()]
+    cities = [c[0] for c in db.get_data_from_table("city", "geo")]
     for probably_city in cities:
         if city.lower() in probably_city.lower():
             return probably_city
@@ -17,7 +17,7 @@ def check_street(db, street):
     Возвращает улицу в правильном виде
     Иначе None
     """
-    streets = [s[0] for s in db.get_streets_from_geo()]
+    streets = [s[0] for s in db.get_data_from_table("street", "geo")]
     for probably_street in streets:
         if street.lower() in probably_street.lower():
             return probably_street
