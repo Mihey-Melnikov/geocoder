@@ -46,19 +46,22 @@ class GeoGui:
         db_frame = Frame(master=database)
         db_frame.place(x=0, y=0, height=300, width=440)
 
-        self.db_info_city_count_lbl = Label(master=db_frame,
-                                            text=f"Всего городов: {city_count}",
-                                            font="Arial 14")
+        self.db_info_city_count_lbl = Label(
+            master=db_frame,
+            text=f"Всего городов: {city_count}",
+            font="Arial 14")
         self.db_info_city_count_lbl.place(x=260, y=90)
 
-        self.db_info_street_count_lbl = Label(master=db_frame,
-                                              text=f"Всего улиц: {street_count}",
-                                              font="Arial 14")
+        self.db_info_street_count_lbl = Label(
+            master=db_frame,
+            text=f"Всего улиц: {street_count}",
+            font="Arial 14")
         self.db_info_street_count_lbl.place(x=260, y=120)
 
-        self.db_info_house_count_lbl = Label(master=db_frame,
-                                             text=f"Всего домов: {total_count}",
-                                             font="Arial 14")
+        self.db_info_house_count_lbl = Label(
+            master=db_frame,
+            text=f"Всего домов: {total_count}",
+            font="Arial 14")
         self.db_info_house_count_lbl.place(x=260, y=150)
 
         self.db_state_lbl = Label(master=db_frame,
@@ -256,9 +259,12 @@ class GeoGui:
             self.db_state_lbl.config(text="Статус базы данных:\nсоздана")
             city_count, street_count, total_count = self.get_actual_stat()
 
-        self.db_info_city_count_lbl.config(text=f"Всего городов: {city_count}")
-        self.db_info_street_count_lbl.config(text=f"Всего улиц: {street_count}")
-        self.db_info_house_count_lbl.config(text=f"Всего домов: {total_count}")
+        self.db_info_city_count_lbl.config(
+            text=f"Всего городов: {city_count}")
+        self.db_info_street_count_lbl.config(
+            text=f"Всего улиц: {street_count}")
+        self.db_info_house_count_lbl.config(
+            text=f"Всего домов: {total_count}")
 
     def get_actual_stat(self):
         """ Возвращает статистику по существующей базе """
@@ -282,7 +288,8 @@ class GeoGui:
         if thread.is_alive():
             state_text = self.db_state_lbl.cget("text")
             if state_text[-1] not in ["—", "\\", "|", "/"]:
-                self.db_state_lbl.config(text="Статус базы данных:\nсоздается —")
+                self.db_state_lbl.config(
+                    text="Статус базы данных:\nсоздается —")
             else:
                 if state_text[-1] == "—":
                     self.db_state_lbl.config(text=f"{state_text[:-1]}\\")

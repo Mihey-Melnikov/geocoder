@@ -7,10 +7,6 @@ import sqlite3
 class DBTester(unittest.TestCase):
     """ Класс-тестировщик модуля database """
 
-    # def __init__(self):
-    #     super().__init__()
-    #     self.db = DataBase("./testdatabase.db")
-
     def test_init(self):
         db = DataBase("./testdatabase.db")
         self.assertTrue(os.path.exists("./testdatabase.db"))
@@ -117,7 +113,8 @@ class DBTester(unittest.TestCase):
              (3, 60.3, 50.3, "Ekb", "Love", "Python", 654321)],
             "geo")
         self.assertEqual(db.get_streets_by_city_in_geo("notExists"), [])
-        self.assertEqual(db.get_streets_by_city_in_geo("Ekb"), [("Mat",), ("Love",)])
+        self.assertEqual(db.get_streets_by_city_in_geo("Ekb"),
+                         [("Mat",), ("Love",)])
         db.close()
         os.remove("./testdatabase.db")
 

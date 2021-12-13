@@ -132,9 +132,9 @@ def format_way_for_geo_db(data, db):
 def get_addr_data(tags):
     """ Возвращает адрес из тегов """
 
-    if 'addr:city' not in tags or\
-            'addr:street' not in tags or\
-            'addr:housenumber' not in tags:
+    if "addr:city" not in tags or\
+            "addr:street" not in tags or\
+            "addr:housenumber" not in tags:
         return None
     tags_dict = {}
     for pair in tags.split(';'):
@@ -142,8 +142,8 @@ def get_addr_data(tags):
         if len(key_value) < 2:
             continue
         tags_dict[key_value[0]] = key_value[1]
-    return (tags_dict.get('addr:city'), tags_dict.get('addr:street'),
-            tags_dict.get('addr:housenumber'), tags_dict.get('addr:postcode'))
+    return (tags_dict.get("addr:city"), tags_dict.get("addr:street"),
+            tags_dict.get("addr:housenumber"), tags_dict.get("addr:postcode"))
 
 
 def fill_geo_db(db):
