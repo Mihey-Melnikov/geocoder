@@ -1,3 +1,4 @@
+import preprocessor
 import request_parser
 from database import DataBase
 import unittest
@@ -31,19 +32,6 @@ class RequestParserTester(unittest.TestCase):
         self.assertEqual(request_parser.check_street(db, "Small"), "Small")
         self.assertEqual(request_parser.check_street(db, "large"), "Large")
         self.assertIsNone(request_parser.check_street(db, "little"))
-        db.close()
-        os.remove("./testdatabase.db")
-
-    def test_parse_question(self):
-        db = self.create_bd()
-        self.assertEqual(request_parser.parse_question("London Big 123", db),
-                         ("London", "Big", "123"))
-        self.assertEqual(request_parser.parse_question("berlin small", db),
-                         ("Berlin", "Small", None))
-        self.assertEqual(request_parser.parse_question("Large 42", db),
-                         (None, "Large", "42"))
-        self.assertEqual(request_parser.parse_question("Dresden", db),
-                         "Все плохо! Мало данных!")
         db.close()
         os.remove("./testdatabase.db")
 

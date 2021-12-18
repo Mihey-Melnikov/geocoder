@@ -108,17 +108,17 @@ class DataBase:
 
         if city and street and housenumber:
             sql = f"SELECT * FROM geo WHERE " \
-                  f"city LIKE '%{city}%' AND " \
-                  f"street LIKE '%{street}%' AND " \
-                  f"housenumber LIKE '%{housenumber}%'"
+                  f"city LIKE '{city}%' AND " \
+                  f"street LIKE '{street}%' AND " \
+                  f"housenumber LIKE '{housenumber}%'"
         elif street and housenumber:
             sql = f"SELECT * FROM geo WHERE " \
-                  f"street LIKE '%{street}%' AND " \
-                  f"housenumber LIKE '%{housenumber}%'"
+                  f"street LIKE '{street}%' AND " \
+                  f"housenumber LIKE '{housenumber}%'"
         elif city and street:
             sql = f"SELECT * FROM geo WHERE " \
-                  f"city LIKE '%{city}%' AND " \
-                  f"street LIKE '%{street}%'"
+                  f"city LIKE '{city}%' AND " \
+                  f"street LIKE '{street}%'"
         else:
             return "Неккоректно написан адрес!"
         self.cursor.execute(sql)

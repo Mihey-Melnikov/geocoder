@@ -9,11 +9,6 @@ import preprocessor
 import threading
 
 
-ADDRESS_LIST = []
-DATABASE_EXIST = False
-STREET_TYPES = []
-
-
 class GeoGui:
     """ Класс-графическая оболочка геокодера """
 
@@ -21,15 +16,15 @@ class GeoGui:
         """ Инициализация оболочки """
 
         self.db = self.get_db()
-        global DATABASE_EXIST, STREET_TYPES
-        DATABASE_EXIST = False
-        city_count, street_count, total_count, status = 0, 0, 0, "не создана"
+        self.street_types = []
+        self.addr_list = []
+        self.database_exist = False
+        city_count, street_count, total_count, db_status = 0, 0, 0, "не создана"
         if self.db:
-            DATABASE_EXIST = True
+            self.database_exist = True
             city_count, street_count, total_count = self.get_actual_stat()
-            status = "создана"
-            STREET_TYPES = preprocessor.create_streets_type_list(self.db)
-            print(STREET_TYPES)
+            db_status = "создана"
+            self.street_types = preprocessor.create_streets_type_list(self.db)
 
         self.window = Tk()
         self.window.title("Geocoder")
@@ -68,7 +63,7 @@ class GeoGui:
         self.db_info_house_count_lbl.place(x=260, y=150)
 
         self.db_state_lbl = Label(master=db_frame,
-                                  text=f"Статус базы данных:\n{status}",
+                                  text=f"Статус базы данных:\n{db_status}",
                                   font="Arial 14")
         self.db_state_lbl.place(x=255, y=30)
 
@@ -204,11 +199,10 @@ class GeoGui:
                                 command=self.copy_one)
         import_one_btn.place(x=80, y=240)
 
-    @staticmethod
-    def show_error(err_text="err_text"):
+    def show_error(self, err_text="err_text"):
         """ Показывает сообщение об ошибке """
 
-        if not DATABASE_EXIST:
+        if not self.database_exist:
             messagebox.showerror(
                 "Базы данных не существует!",
                 "Создайте базу данных:\n"
@@ -216,11 +210,10 @@ class GeoGui:
         else:
             messagebox.showerror("Ошибка", err_text)
 
-    @staticmethod
-    def show_info(info_text="info_text"):
+    def show_info(self, info_text="info_text"):
         """ Показывает сообщение с информацией о действии пользователя """
 
-        if not DATABASE_EXIST:
+        if not self.database_exist:
             messagebox.showerror(
                 "Базы данных не существует!",
                 "Создайте базу данных:\n"
@@ -231,8 +224,7 @@ class GeoGui:
     def create_db(self):
         """ Создает базу данных """
 
-        global DATABASE_EXIST
-        if DATABASE_EXIST:
+        if self.database_exist:
             if self.confirm_upload():
                 self.delete_db(sure=True)
                 self.update_stat(nullify=True)
@@ -306,10 +298,8 @@ class GeoGui:
         else:
             self.db_create_btn.config(state=NORMAL)
             self.update_stat()
-            global DATABASE_EXIST, STREET_TYPES
-            STREET_TYPES = preprocessor.create_streets_type_list(self.db)
-            print(STREET_TYPES)
-            DATABASE_EXIST = True
+            self.street_types = preprocessor.create_streets_type_list(self.db)
+            self.database_exist = True
             self.show_info("База данных создана")
 
     def delete_db(self, sure=False):
@@ -329,10 +319,8 @@ class GeoGui:
             self.show_info("База данных удалена")
         self.db_create_btn.config(text="Сформировать базу данных")
         self.update_stat(True)
-        global DATABASE_EXIST, STREET_TYPES
-        DATABASE_EXIST = False
-        STREET_TYPES = []
-        print(STREET_TYPES)
+        self.database_exist = False
+        self.street_types = []
 
     @staticmethod
     def confirm_delete():
@@ -350,11 +338,10 @@ class GeoGui:
             return database.DataBase()
         return None
 
-    @staticmethod
-    def find_addr(city, street, house):
+    def find_addr(self, city, street, house):
         """ Находит полный адрес из предпологаемых """
 
-        for addr in ADDRESS_LIST:
+        for addr in self.addr_list:
             if addr.city == city and \
                     addr.street == street and \
                     addr.house == house:
@@ -426,22 +413,21 @@ class GeoGui:
     def find(self):
         """ Ищет адрес в базе """
 
-        global ADDRESS_LIST
         self.txt_output_addr.delete(0, self.txt_output_addr.size())
-        ADDRESS_LIST.clear()
+        self.addr_list.clear()
         addr = self.txt_input_addr.get()
         if addr == "":
             self.show_error("Пустой ввод!")
             return
         try:
-            city, street, house = parse_question(addr, self.db)
+            city, street, house = parse_question(addr, self.db, self.street_types)
         except:
             self.show_error("Ошибка ввода!")
             return
         self.add_addr(self.db.get_rows_by(city, street, house))
         self.lbl_output_addr.config(
-            text=f"Возможные адреса, всего {len(ADDRESS_LIST)}:")
-        for addr in ADDRESS_LIST:
+            text=f"Возможные адреса, всего {len(self.addr_list)}:")
+        for addr in self.addr_list:
             self.txt_output_addr.insert(0, addr)
 
     def add_addr(self, addresses):
@@ -454,7 +440,7 @@ class GeoGui:
             self.show_error("Адрес не найден в базе данных")
             return
         for addr in addresses:
-            ADDRESS_LIST.append(Address(
+            self.addr_list.append(Address(
                 id=addr[0], city=addr[3], street=addr[4], house=addr[5],
                 postcode=addr[6], lat=addr[1], lon=addr[2]))
 
