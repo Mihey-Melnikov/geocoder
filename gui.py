@@ -11,6 +11,7 @@ import threading
 
 ADDRESS_LIST = []
 DATABASE_EXIST = False
+STREET_TYPES = []
 
 
 class GeoGui:
@@ -20,13 +21,15 @@ class GeoGui:
         """ Инициализация оболочки """
 
         self.db = self.get_db()
-        global DATABASE_EXIST
+        global DATABASE_EXIST, STREET_TYPES
         DATABASE_EXIST = False
         city_count, street_count, total_count, status = 0, 0, 0, "не создана"
         if self.db:
             DATABASE_EXIST = True
             city_count, street_count, total_count = self.get_actual_stat()
             status = "создана"
+            STREET_TYPES = preprocessor.create_streets_type_list(self.db)
+            print(STREET_TYPES)
 
         self.window = Tk()
         self.window.title("Geocoder")
@@ -302,9 +305,10 @@ class GeoGui:
             self.window.after(100, lambda: self.check_thread(thread))
         else:
             self.db_create_btn.config(state=NORMAL)
-            # self.db_create_btn.config(text="Обновить базу данных")
             self.update_stat()
-            global DATABASE_EXIST
+            global DATABASE_EXIST, STREET_TYPES
+            STREET_TYPES = preprocessor.create_streets_type_list(self.db)
+            print(STREET_TYPES)
             DATABASE_EXIST = True
             self.show_info("База данных создана")
 
@@ -325,8 +329,10 @@ class GeoGui:
             self.show_info("База данных удалена")
         self.db_create_btn.config(text="Сформировать базу данных")
         self.update_stat(True)
-        global DATABASE_EXIST
+        global DATABASE_EXIST, STREET_TYPES
         DATABASE_EXIST = False
+        STREET_TYPES = []
+        print(STREET_TYPES)
 
     @staticmethod
     def confirm_delete():

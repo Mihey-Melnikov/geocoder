@@ -175,6 +175,22 @@ def fill_cities_db(db):
         db.add_data_to_cities(city, ";".join(streets))
 
 
+def create_streets_type_list(db):
+    """ Создает список типов улиц """
+
+    street_types = []
+    streets_by_cities = [x[0].split(";") for x in db.get_data_from_table("streets", "cities")]
+    streets = []
+    for city in streets_by_cities:
+        streets += city
+    streets = list(set(streets))
+    for street in streets:
+        for word in street.split():
+            if word.isalpha() and word.islower() and word not in street_types:
+                street_types.append(word)
+    return street_types
+
+
 def run(db, path):
     """ Запускает программу """
 

@@ -1,3 +1,6 @@
+import re
+
+
 def check_city(db, city):
     """
     Проверяет, является ли входная строка городом
@@ -29,7 +32,7 @@ def parse_question(input, db):
     Парсит запрос пользователя
     Возвращает город, улицу и дом в правильном формате
     """
-    addr = input.split()
+    addr = list(filter(lambda x: len(x) != 0, re.split("[;,. ]", input)))
     city = street = house = None
     if len(addr) == 3:
         city = check_city(db, addr[0])
