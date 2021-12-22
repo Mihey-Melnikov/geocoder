@@ -19,7 +19,8 @@ class GeoGui:
         self.street_types = []
         self.addr_list = []
         self.database_exist = False
-        city_count, street_count, total_count, db_status = 0, 0, 0, "не создана"
+        city_count, street_count, total_count = 0, 0, 0
+        db_status = "не создана"
         if self.db:
             self.database_exist = True
             city_count, street_count, total_count = self.get_actual_stat()
